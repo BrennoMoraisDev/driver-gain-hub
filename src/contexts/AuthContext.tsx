@@ -7,6 +7,9 @@ interface Profile {
   name: string;
   email: string;
   photo_url: string | null;
+  plano: string;
+  status_assinatura: string | null;
+  data_expiracao: string | null;
 }
 
 interface AuthContextType {
@@ -17,6 +20,7 @@ interface AuthContextType {
   signUp: (name: string, email: string, password: string) => Promise<void>;
   signIn: (email: string, password: string) => Promise<void>;
   signOut: () => Promise<void>;
+  refreshProfile: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -33,7 +37,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       .select("*")
       .eq("user_id", userId)
       .single();
-    if (data) setProfile(data as Profile);
+    if (data) setProfile(data as unknown as Profile);
+  };
+
+  const refreshProfile = async () => {
+    if (user) await fetchProfile(user.id);
   };
 
   useEffect(() => {
@@ -80,7 +88,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   return (
-    <AuthContext.Provider value={{ user, profile, session, loading, signUp, signIn, signOut }}>
+    <AuthContext.Provider value={{ user, profile, session, loading, signUp, signIn, signOut, refreshProfile }}>
       {children}
     </AuthContext.Provider>
   );
