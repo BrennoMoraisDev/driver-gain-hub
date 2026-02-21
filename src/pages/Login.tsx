@@ -7,6 +7,7 @@ import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import logo from "@/assets/logo.png";
 import { LogIn } from "lucide-react";
+import Layout from "@/components/Layout";
 
 export default function Login() {
   const [email, setEmail] = useState("");
@@ -34,75 +35,70 @@ export default function Login() {
   };
 
   return (
-    <div className="flex min-h-screen">
-      {/* Left panel */}
-      <div className="hidden lg:flex lg:w-1/2 items-center justify-center bg-secondary p-12">
-        <div className="text-center">
-          <img src={logo} alt="Motorista no Lucro" className="mx-auto mb-8 w-48 h-48 object-contain" />
-          <h2 className="text-3xl font-bold text-secondary-foreground mb-4">Motorista no Lucro</h2>
-          <p className="text-secondary-foreground/70 text-lg max-w-md">
-            Gerencie suas corridas, controle seus gastos e maximize seus lucros como motorista de aplicativo.
-          </p>
-        </div>
-      </div>
-
-      {/* Right panel */}
-      <div className="flex w-full lg:w-1/2 items-center justify-center p-8">
-        <div className="w-full max-w-md space-y-8">
-          <div className="text-center lg:hidden">
-            <img src={logo} alt="Motorista no Lucro" className="mx-auto mb-4 w-24 h-24 object-contain" />
-          </div>
-          <div>
-            <h1 className="text-3xl font-bold text-foreground">Entrar</h1>
-            <p className="mt-2 text-muted-foreground">Acesse sua conta para continuar</p>
+    <Layout>
+      <div className="flex flex-1 items-center justify-center px-4 py-12">
+        <div className="w-full max-w-[400px] space-y-6">
+          {/* Logo + tagline */}
+          <div className="text-center">
+            <img src={logo} alt="Motorista no Lucro" className="mx-auto mb-3 h-[50px] w-auto object-contain" />
+            <p className="text-sm text-muted-foreground">Controle financeiro para motoristas</p>
           </div>
 
-          <form onSubmit={handleSubmit} className="space-y-5">
-            <div className="space-y-2">
-              <Label htmlFor="email">E-mail</Label>
-              <Input
-                id="email"
-                type="email"
-                placeholder="seu@email.com"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                required
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="password">Senha</Label>
-              <Input
-                id="password"
-                type="password"
-                placeholder="••••••••"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                required
-              />
-            </div>
-            <Button type="submit" className="w-full" disabled={isLoading}>
-              {isLoading ? (
-                <span className="flex items-center gap-2">
-                  <span className="h-4 w-4 animate-spin rounded-full border-2 border-primary-foreground border-t-transparent" />
-                  Entrando...
-                </span>
-              ) : (
-                <span className="flex items-center gap-2">
-                  <LogIn className="h-4 w-4" />
-                  Entrar
-                </span>
-              )}
-            </Button>
-          </form>
+          {/* Card */}
+          <div className="rounded-3xl bg-card p-8 shadow-lg border border-border">
+            <h1 className="mb-6 text-2xl font-bold text-card-foreground" style={{ fontFamily: "'Space Grotesk', sans-serif" }}>
+              Entrar
+            </h1>
 
-          <p className="text-center text-muted-foreground">
-            Não tem uma conta?{" "}
-            <Link to="/register" className="font-semibold text-primary hover:underline">
-              Cadastre-se
-            </Link>
-          </p>
+            <form onSubmit={handleSubmit} className="space-y-5">
+              <div className="space-y-2">
+                <Label htmlFor="email">E-mail</Label>
+                <Input
+                  id="email"
+                  type="email"
+                  placeholder="seu@email.com"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  required
+                  className="rounded-xl border-border px-3 py-3 focus-visible:ring-primary"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="password">Senha</Label>
+                <Input
+                  id="password"
+                  type="password"
+                  placeholder="••••••••"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  required
+                  className="rounded-xl border-border px-3 py-3 focus-visible:ring-primary"
+                />
+              </div>
+              <Button type="submit" className="w-full rounded-xl py-3 text-base" disabled={isLoading}>
+                {isLoading ? (
+                  <span className="flex items-center gap-2">
+                    <span className="h-4 w-4 animate-spin rounded-full border-2 border-primary-foreground border-t-transparent" />
+                    Entrando...
+                  </span>
+                ) : (
+                  <span className="flex items-center gap-2">
+                    <LogIn className="h-4 w-4" />
+                    Entrar
+                  </span>
+                )}
+              </Button>
+            </form>
+
+            <p className="mt-6 text-center text-sm text-muted-foreground">
+              Não tem uma conta?{" "}
+              <Link to="/register" className="font-semibold text-primary hover:underline">
+                Cadastre-se
+              </Link>
+            </p>
+          </div>
         </div>
       </div>
-    </div>
+    </Layout>
   );
 }
