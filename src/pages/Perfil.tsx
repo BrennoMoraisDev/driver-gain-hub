@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -6,39 +6,87 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Save, User } from "lucide-react";
+import { Save, User, Camera, Loader2 } from "lucide-react";
 import Layout from "@/components/Layout";
 
 export default function Perfil() {
-  const { profile, refreshProfile } = useAuth();
+  const { user, profile, refreshProfile } = useAuth();
   const { toast } = useToast();
   const [name, setName] = useState(profile?.name || "");
-  const [photoUrl, setPhotoUrl] = useState(profile?.photo_url || "");
   const [saving, setSaving] = useState(false);
+  const [uploading, setUploading] = useState(false);
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const handleSave = async (e: React.FormEvent) => {
+  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (!file.type.startsWith("image/")) {
+      toast({ title: "Formato inválido", description: "Selecione uma imagem (JPEG, PNG ou GIF).", variant: "destructive" });
+      return;
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      toast({ title: "Arquivo muito grande", description: "A imagem deve ter no máximo 5MB.", variant: "destructive" });
+      return;
+    }
+
+    setSelectedFile(file);
+    setPreviewUrl(URL.createObjectURL(file));
+  };
+
+  const handleUploadPhoto = async () => {
+    if (!selectedFile || !user) return;
+    setUploading(true);
+    try {
+      const ext = selectedFile.name.split(".").pop();
+      const filePath = `${user.id}/${user.id}-${Date.now()}.${ext}`;
+
+      const { error: uploadError } = await supabase.storage
+        .from("avatars")
+        .upload(filePath, selectedFile, { upsert: true });
+      if (uploadError) throw uploadError;
+
+      const { data: urlData } = supabase.storage.from("avatars").getPublicUrl(filePath);
+
+      const { error: updateError } = await supabase
+        .from("profiles")
+        .update({ photo_url: urlData.publicUrl })
+        .eq("user_id", user.id);
+      if (updateError) throw updateError;
+
+      await refreshProfile();
+      setSelectedFile(null);
+      setPreviewUrl(null);
+      toast({ title: "Foto atualizada!", description: "Sua foto de perfil foi salva." });
+    } catch (err: any) {
+      toast({ title: "Erro no upload", description: err.message || "Tente novamente.", variant: "destructive" });
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  const handleSaveName = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!profile) return;
+    if (!user) return;
     setSaving(true);
     try {
-      const updates: Record<string, any> = {};
-      if (name) updates.name = name;
-      updates.photo_url = photoUrl || null;
-
       const { error } = await supabase
         .from("profiles")
-        .update(updates as any)
-        .eq("id", profile.id);
-
+        .update({ name })
+        .eq("user_id", user.id);
       if (error) throw error;
       await refreshProfile();
-      toast({ title: "Perfil atualizado!", description: "Seus dados foram salvos com sucesso." });
+      toast({ title: "Nome atualizado!", description: "Seus dados foram salvos." });
     } catch (err: any) {
       toast({ title: "Erro ao salvar", description: err.message || "Tente novamente.", variant: "destructive" });
     } finally {
       setSaving(false);
     }
   };
+
+  const displayPhoto = previewUrl || profile?.photo_url;
 
   return (
     <Layout>
@@ -50,18 +98,48 @@ export default function Perfil() {
               Meu Perfil
             </CardTitle>
           </CardHeader>
-          <CardContent>
-            <div className="mb-6 flex justify-center">
-              {photoUrl ? (
-                <img src={photoUrl} alt="Foto" className="h-24 w-24 rounded-full border-4 border-primary/20 object-cover" />
-              ) : (
-                <div className="flex h-24 w-24 items-center justify-center rounded-full bg-muted text-3xl font-bold text-muted-foreground">
-                  {(profile?.name || "U").charAt(0).toUpperCase()}
+          <CardContent className="space-y-6">
+            {/* Photo upload */}
+            <div className="flex flex-col items-center gap-3">
+              <div className="relative">
+                {displayPhoto ? (
+                  <img src={displayPhoto} alt="Foto" className="h-24 w-24 rounded-full border-4 border-primary/20 object-cover" />
+                ) : (
+                  <div className="flex h-24 w-24 items-center justify-center rounded-full bg-muted text-3xl font-bold text-muted-foreground">
+                    {(profile?.name || "U").charAt(0).toUpperCase()}
+                  </div>
+                )}
+                <button
+                  type="button"
+                  onClick={() => fileInputRef.current?.click()}
+                  className="absolute bottom-0 right-0 flex h-8 w-8 items-center justify-center rounded-full bg-primary text-primary-foreground shadow hover:bg-primary/90 transition"
+                >
+                  <Camera className="h-4 w-4" />
+                </button>
+              </div>
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/jpeg,image/png,image/gif"
+                className="hidden"
+                onChange={handleFileSelect}
+              />
+              {selectedFile && (
+                <div className="flex flex-col items-center gap-2">
+                  <p className="text-xs text-muted-foreground">{selectedFile.name}</p>
+                  <Button size="sm" onClick={handleUploadPhoto} disabled={uploading} className="rounded-xl">
+                    {uploading ? (
+                      <span className="flex items-center gap-2"><Loader2 className="h-4 w-4 animate-spin" />Enviando...</span>
+                    ) : (
+                      "Salvar foto"
+                    )}
+                  </Button>
                 </div>
               )}
             </div>
 
-            <form onSubmit={handleSave} className="space-y-5">
+            {/* Name form */}
+            <form onSubmit={handleSaveName} className="space-y-5">
               <div className="space-y-2">
                 <Label>E-mail</Label>
                 <Input value={profile?.email || ""} disabled className="rounded-xl bg-muted" />
@@ -70,22 +148,11 @@ export default function Perfil() {
                 <Label htmlFor="name">Nome</Label>
                 <Input id="name" value={name} onChange={(e) => setName(e.target.value)} placeholder="Seu nome" className="rounded-xl" />
               </div>
-              <div className="space-y-2">
-                <Label htmlFor="photoUrl">URL da foto</Label>
-                <Input id="photoUrl" value={photoUrl} onChange={(e) => setPhotoUrl(e.target.value)} placeholder="https://i.imgur.com/sua-foto.jpg" className="rounded-xl" />
-                <p className="text-xs text-muted-foreground">Cole um link de imagem (ex: Imgur)</p>
-              </div>
               <Button type="submit" className="w-full rounded-xl" disabled={saving}>
                 {saving ? (
-                  <span className="flex items-center gap-2">
-                    <span className="h-4 w-4 animate-spin rounded-full border-2 border-primary-foreground border-t-transparent" />
-                    Salvando...
-                  </span>
+                  <span className="flex items-center gap-2"><Loader2 className="h-4 w-4 animate-spin" />Salvando...</span>
                 ) : (
-                  <span className="flex items-center gap-2">
-                    <Save className="h-4 w-4" />
-                    Salvar
-                  </span>
+                  <span className="flex items-center gap-2"><Save className="h-4 w-4" />Salvar nome</span>
                 )}
               </Button>
             </form>
