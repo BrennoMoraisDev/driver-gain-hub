@@ -2,7 +2,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useNavigate, Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import logo from "@/assets/logo.png";
-import { LogOut, LogIn, UserPlus, User, Target, Car } from "lucide-react";
+import { LogOut, LogIn, UserPlus, User, Settings } from "lucide-react";
 import { ReactNode } from "react";
 
 interface LayoutProps {
@@ -53,13 +53,9 @@ export default function Layout({ children }: LayoutProps) {
                   <User className="mr-1 h-4 w-4" />
                   Perfil
                 </Button>
-                <Button variant="ghost" size="sm" onClick={() => navigate("/metas")} className="hidden sm:inline-flex text-white/70 hover:bg-white/10 hover:text-white">
-                  <Target className="mr-1 h-4 w-4" />
-                  Metas
-                </Button>
-                <Button variant="ghost" size="sm" onClick={() => navigate("/veiculo")} className="hidden sm:inline-flex text-white/70 hover:bg-white/10 hover:text-white">
-                  <Car className="mr-1 h-4 w-4" />
-                  Veículo
+                <Button variant="ghost" size="sm" onClick={() => navigate("/configuracoes")} className="hidden sm:inline-flex text-white/70 hover:bg-white/10 hover:text-white">
+                  <Settings className="mr-1 h-4 w-4" />
+                  Configurações
                 </Button>
                 <Button variant="outline" size="sm" onClick={handleLogout} className="border-white/30 bg-white/10 text-white hover:bg-white/20 hover:text-white">
                   <LogOut className="mr-1 h-4 w-4" />
