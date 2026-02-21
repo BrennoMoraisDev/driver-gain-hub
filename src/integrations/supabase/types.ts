@@ -53,6 +53,81 @@ export type Database = {
         }
         Relationships: []
       }
+      user_settings: {
+        Row: {
+          created_at: string
+          dias_trabalho_mes: number
+          id: string
+          meta_mensal: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          dias_trabalho_mes?: number
+          id?: string
+          meta_mensal?: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          dias_trabalho_mes?: number
+          id?: string
+          meta_mensal?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      vehicles: {
+        Row: {
+          created_at: string
+          financiamento_mensal: number | null
+          id: string
+          incluir_financiamento: boolean
+          incluir_ipva: boolean
+          incluir_manutencao: boolean
+          incluir_seguro: boolean
+          ipva_vencimento: string | null
+          manutencao_mensal_est: number | null
+          seguro_mensal_est: number | null
+          updated_at: string
+          user_id: string
+          valor_fipe: number
+        }
+        Insert: {
+          created_at?: string
+          financiamento_mensal?: number | null
+          id?: string
+          incluir_financiamento?: boolean
+          incluir_ipva?: boolean
+          incluir_manutencao?: boolean
+          incluir_seguro?: boolean
+          ipva_vencimento?: string | null
+          manutencao_mensal_est?: number | null
+          seguro_mensal_est?: number | null
+          updated_at?: string
+          user_id: string
+          valor_fipe?: number
+        }
+        Update: {
+          created_at?: string
+          financiamento_mensal?: number | null
+          id?: string
+          incluir_financiamento?: boolean
+          incluir_ipva?: boolean
+          incluir_manutencao?: boolean
+          incluir_seguro?: boolean
+          ipva_vencimento?: string | null
+          manutencao_mensal_est?: number | null
+          seguro_mensal_est?: number | null
+          updated_at?: string
+          user_id?: string
+          valor_fipe?: number
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
