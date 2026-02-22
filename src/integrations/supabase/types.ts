@@ -53,6 +53,42 @@ export type Database = {
         }
         Relationships: []
       }
+      shift_sessions: {
+        Row: {
+          created_at: string
+          end_time: string | null
+          id: string
+          is_paused: boolean
+          meta_acumulada: number
+          paused_at: string | null
+          start_time: string
+          total_active_seconds: number
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          end_time?: string | null
+          id?: string
+          is_paused?: boolean
+          meta_acumulada?: number
+          paused_at?: string | null
+          start_time?: string
+          total_active_seconds?: number
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          end_time?: string | null
+          id?: string
+          is_paused?: boolean
+          meta_acumulada?: number
+          paused_at?: string | null
+          start_time?: string
+          total_active_seconds?: number
+          user_id?: string
+        }
+        Relationships: []
+      }
       user_settings: {
         Row: {
           created_at: string

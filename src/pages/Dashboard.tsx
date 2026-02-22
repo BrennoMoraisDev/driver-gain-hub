@@ -2,8 +2,10 @@ import { useState, useEffect } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 import { MdDirectionsCar, MdAttachMoney, MdTrendingUp } from "react-icons/md";
-import { Star, Clock, CheckCircle, AlertTriangle, Target, Car } from "lucide-react";
+import { Star, Clock, CheckCircle, AlertTriangle, Target, Car, Play } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 import Layout from "@/components/Layout";
 
 function getGreeting(): string {
@@ -143,6 +145,7 @@ function MetasSummary({ settings, vehicle }: { settings: SettingsData | null; ve
 
 export default function Dashboard() {
   const { user, profile } = useAuth();
+  const navigate = useNavigate();
   const [settings, setSettings] = useState<SettingsData | null>(null);
   const [vehicle, setVehicle] = useState<VehicleData | null>(null);
 
@@ -169,6 +172,20 @@ export default function Dashboard() {
 
         <SubscriptionBanner profile={profile} />
         <MetasSummary settings={settings} vehicle={vehicle} />
+
+        {/* Iniciar Turno CTA */}
+        <Card className="mb-6 rounded-2xl border-primary/20 bg-primary/5 shadow-sm hover:shadow-md transition-shadow cursor-pointer" onClick={() => navigate("/turno")}>
+          <CardContent className="flex items-center gap-4 p-5">
+            <div className="flex h-12 w-12 items-center justify-center rounded-full bg-primary text-primary-foreground">
+              <Play className="h-6 w-6" />
+            </div>
+            <div className="flex-1">
+              <p className="text-lg font-bold text-foreground">Iniciar Turno</p>
+              <p className="text-sm text-muted-foreground">Comece a cronometrar seu dia de trabalho</p>
+            </div>
+            <Button size="sm" className="rounded-xl">Ir</Button>
+          </CardContent>
+        </Card>
 
         <div className="grid gap-5 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
           <Card className="rounded-2xl border-border bg-card shadow-sm hover:shadow-md transition-shadow p-1">
