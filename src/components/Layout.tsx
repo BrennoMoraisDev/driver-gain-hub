@@ -2,7 +2,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useNavigate, Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import logo from "@/assets/logo.png";
-import { LogOut, LogIn, UserPlus, User, Settings, Menu } from "lucide-react";
+import { LogOut, LogIn, UserPlus, User, Settings, Menu, Home, Timer } from "lucide-react";
 import { ReactNode, useState } from "react";
 import {
   Sheet,
@@ -52,6 +52,14 @@ export default function Layout({ children }: LayoutProps) {
           <div className="flex items-center gap-2 sm:gap-4">
             {user ? (
               <>
+                <Button variant="ghost" size="sm" onClick={() => navigate("/dashboard")} className="hidden sm:inline-flex text-white/70 hover:bg-white/10 hover:text-white">
+                  <Home className="mr-1 h-4 w-4" />
+                  Início
+                </Button>
+                <Button variant="ghost" size="sm" onClick={() => navigate("/turno")} className="hidden sm:inline-flex text-white/70 hover:bg-white/10 hover:text-white">
+                  <Timer className="mr-1 h-4 w-4" />
+                  Turno
+                </Button>
                 <Link to="/perfil" className="flex items-center gap-2 group">
                   {profile?.photo_url ? (
                     <img src={profile.photo_url} alt={profile.name} className="h-9 w-9 rounded-full border-2 border-white/30 object-cover group-hover:border-white/60 transition" />
@@ -64,7 +72,6 @@ export default function Layout({ children }: LayoutProps) {
                     {profile?.name || profile?.email}
                   </span>
                 </Link>
-                {/* Desktop buttons */}
                 <Button variant="ghost" size="sm" onClick={() => navigate("/perfil")} className="hidden sm:inline-flex text-white/70 hover:bg-white/10 hover:text-white">
                   <User className="mr-1 h-4 w-4" />
                   Perfil
@@ -89,6 +96,14 @@ export default function Layout({ children }: LayoutProps) {
                       <SheetTitle>Menu</SheetTitle>
                     </SheetHeader>
                     <nav className="flex flex-col gap-2 mt-4">
+                      <Button variant="ghost" className="justify-start" onClick={() => handleMobileNav("/dashboard")}>
+                        <Home className="mr-2 h-4 w-4" />
+                        Início
+                      </Button>
+                      <Button variant="ghost" className="justify-start" onClick={() => handleMobileNav("/turno")}>
+                        <Timer className="mr-2 h-4 w-4" />
+                        Turno
+                      </Button>
                       <Button variant="ghost" className="justify-start" onClick={() => handleMobileNav("/perfil")}>
                         <User className="mr-2 h-4 w-4" />
                         Perfil
