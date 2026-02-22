@@ -2,8 +2,15 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useNavigate, Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import logo from "@/assets/logo.png";
-import { LogOut, LogIn, UserPlus, User, Settings } from "lucide-react";
-import { ReactNode } from "react";
+import { LogOut, LogIn, UserPlus, User, Settings, Menu } from "lucide-react";
+import { ReactNode, useState } from "react";
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+} from "@/components/ui/sheet";
 
 interface LayoutProps {
   children: ReactNode;
@@ -13,9 +20,17 @@ export default function Layout({ children }: LayoutProps) {
   const { user, profile, signOut } = useAuth();
   const navigate = useNavigate();
 
+  const [mobileOpen, setMobileOpen] = useState(false);
+
   const handleLogout = async () => {
     await signOut();
+    setMobileOpen(false);
     navigate("/login");
+  };
+
+  const handleMobileNav = (path: string) => {
+    setMobileOpen(false);
+    navigate(path);
   };
 
   return (
@@ -49,6 +64,7 @@ export default function Layout({ children }: LayoutProps) {
                     {profile?.name || profile?.email}
                   </span>
                 </Link>
+                {/* Desktop buttons */}
                 <Button variant="ghost" size="sm" onClick={() => navigate("/perfil")} className="hidden sm:inline-flex text-white/70 hover:bg-white/10 hover:text-white">
                   <User className="mr-1 h-4 w-4" />
                   Perfil
@@ -57,10 +73,37 @@ export default function Layout({ children }: LayoutProps) {
                   <Settings className="mr-1 h-4 w-4" />
                   Configurações
                 </Button>
-                <Button variant="outline" size="sm" onClick={handleLogout} className="border-white/30 bg-white/10 text-white hover:bg-white/20 hover:text-white">
+                <Button variant="outline" size="sm" onClick={handleLogout} className="hidden sm:inline-flex border-white/30 bg-white/10 text-white hover:bg-white/20 hover:text-white">
                   <LogOut className="mr-1 h-4 w-4" />
                   Sair
                 </Button>
+                {/* Mobile hamburger menu */}
+                <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
+                  <SheetTrigger asChild>
+                    <Button variant="ghost" size="icon" className="sm:hidden text-white hover:bg-white/10">
+                      <Menu className="h-5 w-5" />
+                    </Button>
+                  </SheetTrigger>
+                  <SheetContent side="right" className="w-64">
+                    <SheetHeader>
+                      <SheetTitle>Menu</SheetTitle>
+                    </SheetHeader>
+                    <nav className="flex flex-col gap-2 mt-4">
+                      <Button variant="ghost" className="justify-start" onClick={() => handleMobileNav("/perfil")}>
+                        <User className="mr-2 h-4 w-4" />
+                        Perfil
+                      </Button>
+                      <Button variant="ghost" className="justify-start" onClick={() => handleMobileNav("/configuracoes")}>
+                        <Settings className="mr-2 h-4 w-4" />
+                        Configurações
+                      </Button>
+                      <Button variant="ghost" className="justify-start text-destructive" onClick={handleLogout}>
+                        <LogOut className="mr-2 h-4 w-4" />
+                        Sair
+                      </Button>
+                    </nav>
+                  </SheetContent>
+                </Sheet>
               </>
             ) : (
               <>
