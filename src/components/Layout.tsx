@@ -2,7 +2,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useNavigate, Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import logo from "@/assets/logo.png";
-import { LogOut, LogIn, UserPlus, User, Settings, Menu, Home, Timer } from "lucide-react";
+import { LogOut, LogIn, UserPlus, User, Settings, Menu, Home, Timer, BarChart3 } from "lucide-react";
 import { ReactNode, useState } from "react";
 import {
   Sheet,
@@ -60,6 +60,10 @@ export default function Layout({ children }: LayoutProps) {
                   <Timer className="mr-1 h-4 w-4" />
                   Turno
                 </Button>
+                <Button variant="ghost" size="sm" onClick={() => navigate("/relatorios")} className="hidden sm:inline-flex text-white/70 hover:bg-white/10 hover:text-white">
+                  <BarChart3 className="mr-1 h-4 w-4" />
+                  Relatórios
+                </Button>
                 <Link to="/perfil" className="flex items-center gap-2 group">
                   {profile?.photo_url ? (
                     <img src={profile.photo_url} alt={profile.name} className="h-9 w-9 rounded-full border-2 border-white/30 object-cover group-hover:border-white/60 transition" />
@@ -103,6 +107,10 @@ export default function Layout({ children }: LayoutProps) {
                       <Button variant="ghost" className="justify-start" onClick={() => handleMobileNav("/turno")}>
                         <Timer className="mr-2 h-4 w-4" />
                         Turno
+                      </Button>
+                      <Button variant="ghost" className="justify-start" onClick={() => handleMobileNav("/relatorios")}>
+                        <BarChart3 className="mr-2 h-4 w-4" />
+                        Relatórios
                       </Button>
                       <Button variant="ghost" className="justify-start" onClick={() => handleMobileNav("/perfil")}>
                         <User className="mr-2 h-4 w-4" />
