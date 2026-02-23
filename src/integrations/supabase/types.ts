@@ -14,6 +14,107 @@ export type Database = {
   }
   public: {
     Tables: {
+      daily_records: {
+        Row: {
+          created_at: string
+          custo_financiamento_diario: number | null
+          date: string
+          gasto_alimentacao: number | null
+          gasto_combustivel: number | null
+          gasto_outros: number | null
+          id: string
+          indrive_amount: number | null
+          indrive_rides: number | null
+          km_total: number | null
+          lucro_bruto: number | null
+          lucro_liquido: number | null
+          media_hora_liquida: number | null
+          ninety_nine_amount: number | null
+          ninety_nine_rides: number | null
+          private_amount: number | null
+          private_rides: number | null
+          provisao_ipva_diaria: number | null
+          provisao_manutencao_diaria: number | null
+          provisao_seguro_diaria: number | null
+          shift_session_id: string | null
+          tempo_ativo_segundos: number | null
+          total_faturamento: number | null
+          total_gastos_variaveis: number | null
+          uber_amount: number | null
+          uber_rides: number | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          custo_financiamento_diario?: number | null
+          date: string
+          gasto_alimentacao?: number | null
+          gasto_combustivel?: number | null
+          gasto_outros?: number | null
+          id?: string
+          indrive_amount?: number | null
+          indrive_rides?: number | null
+          km_total?: number | null
+          lucro_bruto?: number | null
+          lucro_liquido?: number | null
+          media_hora_liquida?: number | null
+          ninety_nine_amount?: number | null
+          ninety_nine_rides?: number | null
+          private_amount?: number | null
+          private_rides?: number | null
+          provisao_ipva_diaria?: number | null
+          provisao_manutencao_diaria?: number | null
+          provisao_seguro_diaria?: number | null
+          shift_session_id?: string | null
+          tempo_ativo_segundos?: number | null
+          total_faturamento?: number | null
+          total_gastos_variaveis?: number | null
+          uber_amount?: number | null
+          uber_rides?: number | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          custo_financiamento_diario?: number | null
+          date?: string
+          gasto_alimentacao?: number | null
+          gasto_combustivel?: number | null
+          gasto_outros?: number | null
+          id?: string
+          indrive_amount?: number | null
+          indrive_rides?: number | null
+          km_total?: number | null
+          lucro_bruto?: number | null
+          lucro_liquido?: number | null
+          media_hora_liquida?: number | null
+          ninety_nine_amount?: number | null
+          ninety_nine_rides?: number | null
+          private_amount?: number | null
+          private_rides?: number | null
+          provisao_ipva_diaria?: number | null
+          provisao_manutencao_diaria?: number | null
+          provisao_seguro_diaria?: number | null
+          shift_session_id?: string | null
+          tempo_ativo_segundos?: number | null
+          total_faturamento?: number | null
+          total_gastos_variaveis?: number | null
+          uber_amount?: number | null
+          uber_rides?: number | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "daily_records_shift_session_id_fkey"
+            columns: ["shift_session_id"]
+            isOneToOne: false
+            referencedRelation: "shift_sessions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           created_at: string

@@ -180,7 +180,7 @@ export default function Turno() {
       const s = data as ShiftSession;
       setShift(s);
       setActiveSeconds(0);
-      toast({ title: "Turno iniciado!", description: "Bom trabalho! 🚗" });
+      toast({ title: "Turno iniciado! 🚗", duration: 2000 });
     } catch (err: any) {
       toast({ title: "Erro", description: err.message, variant: "destructive" });
     } finally {
@@ -203,7 +203,7 @@ export default function Turno() {
         .eq("id", shift.id);
       if (error) throw error;
       setShift((prev) => prev ? { ...prev, is_paused: true, paused_at: new Date().toISOString(), total_active_seconds: activeSeconds } : null);
-      toast({ title: "Turno pausado" });
+      toast({ title: "Turno pausado ⏸", duration: 2000 });
     } catch (err: any) {
       toast({ title: "Erro", description: err.message, variant: "destructive" });
     } finally {
@@ -227,7 +227,7 @@ export default function Turno() {
         .eq("id", shift.id);
       if (error) throw error;
       setShift((prev) => prev ? { ...prev, is_paused: false, paused_at: now, total_active_seconds: activeSeconds } : null);
-      toast({ title: "Turno retomado!" });
+      toast({ title: "Turno retomado! ▶", duration: 2000 });
     } catch (err: any) {
       toast({ title: "Erro", description: err.message, variant: "destructive" });
     } finally {
@@ -252,8 +252,8 @@ export default function Turno() {
         })
         .eq("id", shift.id);
       if (error) throw error;
-      toast({ title: "Turno encerrado!", description: `Duração: ${formatTime(activeSeconds)} | Meta: ${fmt(finalMeta)}` });
-      navigate("/dashboard");
+      toast({ title: "Turno encerrado!", duration: 2000 });
+      navigate(`/finalizar-dia?shift=${shift.id}`);
     } catch (err: any) {
       toast({ title: "Erro", description: err.message, variant: "destructive" });
     } finally {
@@ -325,7 +325,7 @@ export default function Turno() {
                     <Button
                       onClick={handlePause}
                       disabled={actionLoading}
-                      className="w-full h-14 text-lg rounded-xl bg-amber-500 text-white hover:bg-amber-600 active:bg-amber-700 transition-colors"
+                      className="w-full h-14 text-lg rounded-xl border-2 border-amber-500 bg-amber-500 text-white font-semibold hover:bg-amber-600 hover:border-amber-600 focus:ring-2 focus:ring-amber-400 focus:ring-offset-2 transition-colors"
                       size="lg"
                     >
                       {actionLoading ? <Loader2 className="h-5 w-5 animate-spin mr-2" /> : <Pause className="h-5 w-5 mr-2" />}
@@ -335,7 +335,7 @@ export default function Turno() {
                     <Button
                       onClick={handleResume}
                       disabled={actionLoading}
-                      className="w-full h-14 text-lg rounded-xl bg-emerald-600 text-white hover:bg-emerald-700 active:bg-emerald-800 transition-colors"
+                      className="w-full h-14 text-lg rounded-xl border-2 border-emerald-600 bg-emerald-600 text-white font-semibold hover:bg-emerald-700 hover:border-emerald-700 focus:ring-2 focus:ring-emerald-400 focus:ring-offset-2 transition-colors"
                       size="lg"
                     >
                       {actionLoading ? <Loader2 className="h-5 w-5 animate-spin mr-2" /> : <Play className="h-5 w-5 mr-2" />}
