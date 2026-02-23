@@ -325,8 +325,7 @@ export default function Turno() {
                     <Button
                       onClick={handlePause}
                       disabled={actionLoading}
-                      variant="outline"
-                      className="w-full h-14 text-lg rounded-xl border-yellow-400 text-yellow-700 hover:bg-yellow-50"
+                      className="w-full h-14 text-lg rounded-xl bg-amber-500 text-white hover:bg-amber-600 active:bg-amber-700 transition-colors"
                       size="lg"
                     >
                       {actionLoading ? <Loader2 className="h-5 w-5 animate-spin mr-2" /> : <Pause className="h-5 w-5 mr-2" />}
@@ -336,7 +335,7 @@ export default function Turno() {
                     <Button
                       onClick={handleResume}
                       disabled={actionLoading}
-                      className="w-full h-14 text-lg rounded-xl"
+                      className="w-full h-14 text-lg rounded-xl bg-emerald-600 text-white hover:bg-emerald-700 active:bg-emerald-800 transition-colors"
                       size="lg"
                     >
                       {actionLoading ? <Loader2 className="h-5 w-5 animate-spin mr-2" /> : <Play className="h-5 w-5 mr-2" />}
