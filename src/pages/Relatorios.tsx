@@ -104,11 +104,24 @@ function getDateRange(period: Period, refDate: string) {
   }
 }
 
+interface VehicleFlags {
+  incluir_ipva: boolean;
+  incluir_manutencao: boolean;
+  incluir_seguro: boolean;
+  incluir_financiamento: boolean;
+}
+
 export default function Relatorios() {
   const { user } = useAuth();
   const [period, setPeriod] = useState<Period>("daily");
   const [refDate, setRefDate] = useState(format(new Date(), "yyyy-MM-dd"));
   const [records, setRecords] = useState<DailyRecord[]>([]);
+  const [vehicleFlags, setVehicleFlags] = useState<VehicleFlags>({
+    incluir_ipva: true,
+    incluir_manutencao: true,
+    incluir_seguro: true,
+    incluir_financiamento: true,
+  });
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
@@ -116,14 +129,24 @@ export default function Relatorios() {
     const fetchData = async () => {
       setLoading(true);
       const { start, end } = getDateRange(period, refDate);
-      const { data } = await supabase
-        .from("daily_records")
-        .select("*")
-        .eq("user_id", user.id)
-        .gte("date", start)
-        .lte("date", end)
-        .order("date", { ascending: true });
-      setRecords((data as DailyRecord[]) || []);
+      const [recordsRes, vehicleRes] = await Promise.all([
+        supabase
+          .from("daily_records")
+          .select("*")
+          .eq("user_id", user.id)
+          .gte("date", start)
+          .lte("date", end)
+          .order("date", { ascending: true }),
+        supabase
+          .from("vehicles")
+          .select("incluir_ipva, incluir_manutencao, incluir_seguro, incluir_financiamento")
+          .eq("user_id", user.id)
+          .maybeSingle(),
+      ]);
+      setRecords((recordsRes.data as DailyRecord[]) || []);
+      if (vehicleRes.data) {
+        setVehicleFlags(vehicleRes.data as VehicleFlags);
+      }
       setLoading(false);
     };
     fetchData();
@@ -136,10 +159,10 @@ export default function Relatorios() {
     const totalCombustivel = records.reduce((s, r) => s + r.gasto_combustivel, 0);
     const totalAlimentacao = records.reduce((s, r) => s + r.gasto_alimentacao, 0);
     const totalOutros = records.reduce((s, r) => s + r.gasto_outros, 0);
-    const totalIpva = records.reduce((s, r) => s + r.provisao_ipva_diaria, 0);
-    const totalManut = records.reduce((s, r) => s + r.provisao_manutencao_diaria, 0);
-    const totalSeguro = records.reduce((s, r) => s + r.provisao_seguro_diaria, 0);
-    const totalFinanc = records.reduce((s, r) => s + r.custo_financiamento_diario, 0);
+    const totalIpva = vehicleFlags.incluir_ipva ? records.reduce((s, r) => s + r.provisao_ipva_diaria, 0) : 0;
+    const totalManut = vehicleFlags.incluir_manutencao ? records.reduce((s, r) => s + r.provisao_manutencao_diaria, 0) : 0;
+    const totalSeguro = vehicleFlags.incluir_seguro ? records.reduce((s, r) => s + r.provisao_seguro_diaria, 0) : 0;
+    const totalFinanc = vehicleFlags.incluir_financiamento ? records.reduce((s, r) => s + r.custo_financiamento_diario, 0) : 0;
     const totalCustosFixos = totalIpva + totalManut + totalSeguro + totalFinanc;
     const totalGastos = totalGastosVar + totalCustosFixos;
     const lucroLiquido = totalFaturamento - totalGastos;
@@ -154,6 +177,17 @@ export default function Relatorios() {
     const pctCombustivel = totalGastos > 0 ? (totalCombustivel / totalGastos) * 100 : 0;
     const pctAlimentacao = totalGastos > 0 ? (totalAlimentacao / totalGastos) * 100 : 0;
 
+    const gastosBreakdown = [
+      { name: "Combustível", value: totalCombustivel },
+      { name: "Alimentação", value: totalAlimentacao },
+      { name: "Outros", value: totalOutros },
+    ];
+    if (vehicleFlags.incluir_ipva) gastosBreakdown.push({ name: "IPVA", value: totalIpva });
+    if (vehicleFlags.incluir_manutencao) gastosBreakdown.push({ name: "Manutenção", value: totalManut });
+    if (vehicleFlags.incluir_seguro || vehicleFlags.incluir_financiamento) {
+      gastosBreakdown.push({ name: "Seguro + Financ.", value: totalSeguro + totalFinanc });
+    }
+
     return {
       totalFaturamento,
       totalGastos,
@@ -165,17 +199,9 @@ export default function Relatorios() {
       pctLucro,
       pctCombustivel,
       pctAlimentacao,
-      // For pie chart
-      gastosBreakdown: [
-        { name: "Combustível", value: totalCombustivel },
-        { name: "Alimentação", value: totalAlimentacao },
-        { name: "Outros", value: totalOutros },
-        { name: "IPVA", value: totalIpva },
-        { name: "Manutenção", value: totalManut },
-        { name: "Seguro + Financ.", value: totalSeguro + totalFinanc },
-      ].filter((g) => g.value > 0),
+      gastosBreakdown: gastosBreakdown.filter((g) => g.value > 0),
     };
-  }, [records]);
+  }, [records, vehicleFlags]);
 
   const chartData = useMemo(() => {
     return records.map((r) => ({
