@@ -1,1 +1,7 @@
 project_id = "cdgewivrqqlxelcyekln"
+
+[functions.kiwify-webhook]
+verify_jwt = false
+
+[functions.admin-activate-premium]
+verify_jwt = false
