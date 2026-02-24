@@ -115,6 +115,39 @@ export type Database = {
           },
         ]
       }
+      kiwify_events: {
+        Row: {
+          created_at: string | null
+          error_log: string | null
+          event_id: string
+          event_type: string
+          id: string
+          payload: Json
+          processed: boolean | null
+          processed_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          error_log?: string | null
+          event_id: string
+          event_type: string
+          id?: string
+          payload: Json
+          processed?: boolean | null
+          processed_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          error_log?: string | null
+          event_id?: string
+          event_type?: string
+          id?: string
+          payload?: Json
+          processed?: boolean | null
+          processed_at?: string | null
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           created_at: string
@@ -186,6 +219,42 @@ export type Database = {
           paused_at?: string | null
           start_time?: string
           total_active_seconds?: number
+          user_id?: string
+        }
+        Relationships: []
+      }
+      subscriptions: {
+        Row: {
+          created_at: string | null
+          current_period_end: string | null
+          current_period_start: string | null
+          id: string
+          kiwify_transaction_id: string | null
+          plan_type: string | null
+          status: string
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          current_period_end?: string | null
+          current_period_start?: string | null
+          id?: string
+          kiwify_transaction_id?: string | null
+          plan_type?: string | null
+          status?: string
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          current_period_end?: string | null
+          current_period_start?: string | null
+          id?: string
+          kiwify_transaction_id?: string | null
+          plan_type?: string | null
+          status?: string
+          updated_at?: string | null
           user_id?: string
         }
         Relationships: []
