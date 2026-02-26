@@ -30,10 +30,11 @@ Deno.serve(async (req) => {
     const authHeader = req.headers.get("Authorization") || req.headers.get("authorization") || "";
     const token = queryToken || customTokenHeader || authHeader.replace("Bearer ", "").trim();
     const expectedToken = Deno.env.get("KIWIFY_WEBHOOK_TOKEN");
-    console.log("Token received:", token ? `${token.substring(0, 3)}...` : "empty");
-    console.log("Expected token exists:", !!expectedToken);
-    console.log("Custom header:", customTokenHeader ? "present" : "absent");
-    console.log("Auth header:", authHeader ? "present" : "absent");
+    console.log("DEBUG v2 - Token received length:", token.length, "Expected length:", expectedToken?.length);
+    console.log("DEBUG v2 - Token match:", token === expectedToken);
+    console.log("DEBUG v2 - Query token:", queryToken ? "present" : "absent");
+    console.log("DEBUG v2 - Custom header:", customTokenHeader ? "present" : "absent");
+    console.log("DEBUG v2 - Auth header value starts:", authHeader.substring(0, 20));
 
     if (!expectedToken || token !== expectedToken) {
       console.error("Invalid webhook token");
