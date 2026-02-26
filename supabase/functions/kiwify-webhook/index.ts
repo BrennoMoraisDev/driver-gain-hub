@@ -3,7 +3,7 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers":
-    "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
+    "authorization, x-client-info, apikey, content-type, x-webhook-token, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
 Deno.serve(async (req) => {
@@ -24,9 +24,16 @@ Deno.serve(async (req) => {
 
   try {
     // Validate webhook token
+    const url = new URL(req.url);
+    const queryToken = url.searchParams.get("token") || "";
+    const customTokenHeader = req.headers.get("x-webhook-token") || "";
     const authHeader = req.headers.get("Authorization") || req.headers.get("authorization") || "";
-    const token = authHeader.replace("Bearer ", "").trim();
+    const token = queryToken || customTokenHeader || authHeader.replace("Bearer ", "").trim();
     const expectedToken = Deno.env.get("KIWIFY_WEBHOOK_TOKEN");
+    console.log("Token received:", token ? `${token.substring(0, 3)}...` : "empty");
+    console.log("Expected token exists:", !!expectedToken);
+    console.log("Custom header:", customTokenHeader ? "present" : "absent");
+    console.log("Auth header:", authHeader ? "present" : "absent");
 
     if (!expectedToken || token !== expectedToken) {
       console.error("Invalid webhook token");
