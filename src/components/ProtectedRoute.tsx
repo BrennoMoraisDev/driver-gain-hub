@@ -1,11 +1,10 @@
 import { Navigate, useLocation } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 
-const ADMIN_EMAIL = "brennomoraisdev@gmail.com";
 const FREE_ROUTES = ["/assinar", "/perfil", "/configuracoes"];
 
 export default function ProtectedRoute({ children }: { children: React.ReactNode }) {
-  const { user, profile, loading } = useAuth();
+  const { user, loading, hasAccess } = useAuth();
   const location = useLocation();
 
   if (loading) {
@@ -18,27 +17,14 @@ export default function ProtectedRoute({ children }: { children: React.ReactNode
 
   if (!user) return <Navigate to="/login" replace />;
 
-  // Admin always has access
-  if (profile?.email === ADMIN_EMAIL) return <>{children}</>;
-
-  // Allow free routes (subscribe page, profile, settings) regardless of subscription
+  // Allow free routes regardless of subscription
   if (FREE_ROUTES.some((r) => location.pathname.startsWith(r))) {
     return <>{children}</>;
   }
 
-  // Check subscription access
-  if (profile) {
-    const status = profile.status_assinatura;
-    const expDate = profile.data_expiracao ? new Date(profile.data_expiracao) : null;
-    const now = new Date();
-    const hasAccess =
-      (status === "trial" && expDate && expDate > now) ||
-      (status === "active" && expDate && expDate > now) ||
-      (status === "canceled" && expDate && expDate > now); // canceled but still in paid period
-
-    if (!hasAccess) {
-      return <Navigate to="/assinar" replace />;
-    }
+  // Check subscription access via AuthContext
+  if (!hasAccess) {
+    return <Navigate to="/assinar" replace />;
   }
 
   return <>{children}</>;

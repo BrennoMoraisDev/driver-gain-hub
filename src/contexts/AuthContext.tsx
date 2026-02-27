@@ -12,11 +12,15 @@ interface Profile {
   data_expiracao: string | null;
 }
 
+const ADMIN_EMAIL = "brennomoraisdev@gmail.com";
+
 interface AuthContextType {
   user: User | null;
   profile: Profile | null;
   session: Session | null;
   loading: boolean;
+  hasAccess: boolean;
+  isAdmin: boolean;
   signUp: (name: string, email: string, password: string) => Promise<void>;
   signIn: (email: string, password: string) => Promise<void>;
   signOut: () => Promise<void>;
@@ -87,8 +91,23 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setProfile(null);
   };
 
+  const isAdmin = profile?.email === ADMIN_EMAIL;
+
+  const hasAccess = (() => {
+    if (!profile) return false;
+    if (isAdmin) return true;
+    const status = profile.status_assinatura;
+    const expDate = profile.data_expiracao ? new Date(profile.data_expiracao) : null;
+    const now = new Date();
+    return (
+      (status === "trial" && !!expDate && expDate > now) ||
+      (status === "active" && !!expDate && expDate > now) ||
+      (status === "canceled" && !!expDate && expDate > now)
+    );
+  })();
+
   return (
-    <AuthContext.Provider value={{ user, profile, session, loading, signUp, signIn, signOut, refreshProfile }}>
+    <AuthContext.Provider value={{ user, profile, session, loading, hasAccess, isAdmin, signUp, signIn, signOut, refreshProfile }}>
       {children}
     </AuthContext.Provider>
   );
