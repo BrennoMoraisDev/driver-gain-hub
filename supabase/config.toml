@@ -5,3 +5,6 @@ verify_jwt = false
 
 [functions.admin-activate-premium]
 verify_jwt = false
+
+[functions.admin-api]
+verify_jwt = false
