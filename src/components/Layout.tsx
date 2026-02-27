@@ -2,7 +2,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useNavigate, Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import logo from "@/assets/logo.png";
-import { LogOut, LogIn, UserPlus, User, Settings, Menu, Home, Timer, BarChart3 } from "lucide-react";
+import { LogOut, LogIn, UserPlus, User, Settings, Menu, Home, Timer, BarChart3, Shield } from "lucide-react";
 import { ReactNode, useState } from "react";
 import {
   Sheet,
@@ -17,7 +17,7 @@ interface LayoutProps {
 }
 
 export default function Layout({ children }: LayoutProps) {
-  const { user, profile, signOut } = useAuth();
+  const { user, profile, signOut, isAdmin } = useAuth();
   const navigate = useNavigate();
 
   const [mobileOpen, setMobileOpen] = useState(false);
@@ -84,6 +84,12 @@ export default function Layout({ children }: LayoutProps) {
                   <Settings className="mr-1 h-4 w-4" />
                   Configurações
                 </Button>
+                {isAdmin && (
+                  <Button variant="ghost" size="sm" onClick={() => navigate("/admin")} className="hidden sm:inline-flex text-white/70 hover:bg-white/10 hover:text-white">
+                    <Shield className="mr-1 h-4 w-4" />
+                    Admin
+                  </Button>
+                )}
                 <Button variant="outline" size="sm" onClick={handleLogout} className="hidden sm:inline-flex border-white/30 bg-white/10 text-white hover:bg-white/20 hover:text-white">
                   <LogOut className="mr-1 h-4 w-4" />
                   Sair
@@ -120,6 +126,12 @@ export default function Layout({ children }: LayoutProps) {
                         <Settings className="mr-2 h-4 w-4" />
                         Configurações
                       </Button>
+                      {isAdmin && (
+                        <Button variant="ghost" className="justify-start" onClick={() => handleMobileNav("/admin")}>
+                          <Shield className="mr-2 h-4 w-4" />
+                          Admin
+                        </Button>
+                      )}
                       <Button variant="ghost" className="justify-start text-destructive" onClick={handleLogout}>
                         <LogOut className="mr-2 h-4 w-4" />
                         Sair
