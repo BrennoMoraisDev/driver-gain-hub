@@ -3,6 +3,7 @@ import { useNavigate, Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import logo from "@/assets/logo.png";
 import { LogOut, LogIn, UserPlus, User, Settings, Menu, Home, Timer, BarChart3, Shield } from "lucide-react";
+import ThemeToggle from "@/components/ThemeToggle";
 import { ReactNode, useState } from "react";
 import {
   Sheet,
@@ -90,6 +91,7 @@ export default function Layout({ children }: LayoutProps) {
                     Admin
                   </Button>
                 )}
+                <ThemeToggle />
                 <Button variant="outline" size="sm" onClick={handleLogout} className="hidden sm:inline-flex border-white/30 bg-white/10 text-white hover:bg-white/20 hover:text-white">
                   <LogOut className="mr-1 h-4 w-4" />
                   Sair
@@ -142,6 +144,7 @@ export default function Layout({ children }: LayoutProps) {
               </>
             ) : (
               <>
+                <ThemeToggle />
                 <Button variant="ghost" size="sm" onClick={() => navigate("/login")} className="text-white hover:bg-white/10 hover:text-white">
                   <LogIn className="mr-1 h-4 w-4" />
                   Entrar
