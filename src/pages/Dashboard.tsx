@@ -1,10 +1,9 @@
 import { useState, useEffect } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { MdDirectionsCar, MdAttachMoney, MdTrendingUp } from "react-icons/md";
-import { Star, Clock, CheckCircle, AlertTriangle, Target, Car, Play } from "lucide-react";
+import { Star, Clock, CheckCircle, AlertTriangle, Play, DollarSign, TrendingUp, Timer } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import Layout from "@/components/Layout";
 
@@ -18,17 +17,20 @@ function getGreeting(): string {
 const fmt = (v: number) =>
   v.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
 
+function formatTime(totalSeconds: number): string {
+  const h = Math.floor(totalSeconds / 3600);
+  const m = Math.floor((totalSeconds % 3600) / 60);
+  return `${h}h ${String(m).padStart(2, "0")}min`;
+}
+
 function SubscriptionBanner({ profile }: { profile: any }) {
   if (!profile) return null;
   const isAdmin = profile.email === "brennomoraisdev@gmail.com";
   if (isAdmin) {
     return (
-      <div className="mb-6 flex items-center gap-3 rounded-2xl border border-primary/20 bg-primary/5 px-5 py-4">
-        <Star className="h-6 w-6 text-primary" />
-        <div>
-          <p className="font-semibold text-foreground">Admin – Acesso vitalício</p>
-          <p className="text-sm text-muted-foreground">Você tem acesso completo à plataforma.</p>
-        </div>
+      <div className="flex items-center gap-3 rounded-2xl border border-primary/20 bg-primary/5 px-5 py-3">
+        <Star className="h-5 w-5 text-primary shrink-0" />
+        <p className="text-sm font-semibold text-foreground">Admin – Acesso vitalício</p>
       </div>
     );
   }
@@ -39,185 +41,144 @@ function SubscriptionBanner({ profile }: { profile: any }) {
   if (status === "trial" && !isExpired && expDate) {
     const daysLeft = Math.max(0, Math.ceil((expDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24)));
     return (
-      <div className="mb-6 flex items-center gap-3 rounded-2xl border border-yellow-400/30 bg-yellow-50 px-5 py-4 dark:bg-yellow-900/10">
-        <Clock className="h-6 w-6 text-yellow-600" />
-        <div>
-          <p className="font-semibold text-foreground">Teste grátis – {daysLeft} dia{daysLeft !== 1 ? "s" : ""} restante{daysLeft !== 1 ? "s" : ""}</p>
-          <p className="text-sm text-muted-foreground">Aproveite todas as funcionalidades premium.</p>
-        </div>
+      <div className="flex items-center gap-3 rounded-2xl border border-yellow-400/30 bg-yellow-50 dark:bg-yellow-900/10 px-5 py-3">
+        <Clock className="h-5 w-5 text-yellow-600 shrink-0" />
+        <p className="text-sm font-semibold text-foreground">Teste grátis – {daysLeft} dia{daysLeft !== 1 ? "s" : ""} restante{daysLeft !== 1 ? "s" : ""}</p>
       </div>
     );
   }
   if (status === "active" && !isExpired) {
     return (
-      <div className="mb-6 flex items-center gap-3 rounded-2xl border border-secondary/30 bg-secondary/5 px-5 py-4">
-        <CheckCircle className="h-6 w-6 text-secondary" />
-        <div>
-          <p className="font-semibold text-foreground">Premium ativo</p>
-          <p className="text-sm text-muted-foreground">Sua assinatura está ativa.</p>
-        </div>
+      <div className="flex items-center gap-3 rounded-2xl border border-primary/20 bg-primary/5 px-5 py-3">
+        <CheckCircle className="h-5 w-5 text-primary shrink-0" />
+        <p className="text-sm font-semibold text-foreground">Premium ativo</p>
       </div>
     );
   }
   return (
-    <div className="mb-6 flex items-center gap-3 rounded-2xl border border-destructive/30 bg-destructive/5 px-5 py-4">
-      <AlertTriangle className="h-6 w-6 text-destructive" />
-      <div>
-        <p className="font-semibold text-foreground">Assinatura expirada</p>
-        <p className="text-sm text-muted-foreground">Assine novamente para continuar usando.</p>
-      </div>
+    <div className="flex items-center gap-3 rounded-2xl border border-destructive/30 bg-destructive/5 px-5 py-3">
+      <AlertTriangle className="h-5 w-5 text-destructive shrink-0" />
+      <p className="text-sm font-semibold text-foreground">Assinatura expirada</p>
     </div>
   );
 }
 
-interface SettingsData {
-  meta_mensal: number;
-  dias_trabalho_mes: number;
-}
-
-interface VehicleData {
-  valor_fipe: number;
-  manutencao_mensal_est: number | null;
-  seguro_mensal_est: number | null;
-  financiamento_mensal: number | null;
-  incluir_ipva: boolean;
-  incluir_manutencao: boolean;
-  incluir_seguro: boolean;
-  incluir_financiamento: boolean;
-}
-
-function MetasSummary({ settings, vehicle }: { settings: SettingsData | null; vehicle: VehicleData | null }) {
-  if (!settings && !vehicle) return null;
-
-  const metaDiaria = settings ? settings.meta_mensal / (settings.dias_trabalho_mes || 1) : 0;
-
-  let custoFixo = 0;
-  if (vehicle) {
-    const ipvaMensal = (vehicle.valor_fipe * 0.04) / 12;
-    custoFixo =
-      (vehicle.incluir_ipva ? ipvaMensal : 0) +
-      (vehicle.incluir_manutencao ? (vehicle.manutencao_mensal_est || 0) : 0) +
-      (vehicle.incluir_seguro ? (vehicle.seguro_mensal_est || 0) : 0) +
-      (vehicle.incluir_financiamento ? (vehicle.financiamento_mensal || 0) : 0);
-  }
-
-  return (
-    <div className="mb-6 grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
-      {settings && (
-        <>
-          <div className="flex items-center gap-3 rounded-2xl border border-border bg-card p-4 shadow-sm">
-            <Target className="h-5 w-5 text-primary shrink-0" />
-            <div>
-              <p className="text-xs text-muted-foreground">Meta mensal</p>
-              <p className="font-semibold text-foreground">{fmt(settings.meta_mensal)}</p>
-            </div>
-          </div>
-          <div className="flex items-center gap-3 rounded-2xl border border-border bg-card p-4 shadow-sm">
-            <Target className="h-5 w-5 text-secondary shrink-0" />
-            <div>
-              <p className="text-xs text-muted-foreground">Meta diária</p>
-              <p className="font-semibold text-foreground">{fmt(metaDiaria)}</p>
-            </div>
-          </div>
-        </>
-      )}
-      {vehicle && (
-        <>
-          <div className="flex items-center gap-3 rounded-2xl border border-border bg-card p-4 shadow-sm">
-            <Car className="h-5 w-5 text-primary shrink-0" />
-            <div>
-              <p className="text-xs text-muted-foreground">IPVA estimado</p>
-              <p className="font-semibold text-foreground">{fmt(vehicle.valor_fipe * 0.04)}/ano</p>
-            </div>
-          </div>
-          <div className="flex items-center gap-3 rounded-2xl border border-border bg-card p-4 shadow-sm">
-            <Car className="h-5 w-5 text-destructive shrink-0" />
-            <div>
-              <p className="text-xs text-muted-foreground">Custo fixo mensal</p>
-              <p className="font-semibold text-foreground">{fmt(custoFixo)}</p>
-            </div>
-          </div>
-        </>
-      )}
-    </div>
-  );
+interface TodaySummary {
+  total_faturamento: number;
+  lucro_liquido: number;
+  tempo_ativo_segundos: number;
+  uber_rides: number;
+  ninety_nine_rides: number;
+  indrive_rides: number;
+  private_rides: number;
 }
 
 export default function Dashboard() {
   const { user, profile } = useAuth();
   const navigate = useNavigate();
-  const [settings, setSettings] = useState<SettingsData | null>(null);
-  const [vehicle, setVehicle] = useState<VehicleData | null>(null);
+  const [activeShift, setActiveShift] = useState<{ id: string } | null>(null);
+  const [todayRecord, setTodayRecord] = useState<TodaySummary | null>(null);
 
   useEffect(() => {
     if (!user) return;
+    const today = new Date().toISOString().split("T")[0];
     Promise.all([
-      supabase.from("user_settings").select("*").eq("user_id", user.id).single(),
-      supabase.from("vehicles").select("*").eq("user_id", user.id).single(),
-    ]).then(([s, v]) => {
-      if (s.data) setSettings(s.data as SettingsData);
-      if (v.data) setVehicle(v.data as VehicleData);
+      supabase
+        .from("shift_sessions")
+        .select("id")
+        .eq("user_id", user.id)
+        .is("end_time", null)
+        .limit(1)
+        .maybeSingle(),
+      supabase
+        .from("daily_records")
+        .select("total_faturamento, lucro_liquido, tempo_ativo_segundos, uber_rides, ninety_nine_rides, indrive_rides, private_rides")
+        .eq("user_id", user.id)
+        .eq("date", today)
+        .maybeSingle(),
+    ]).then(([shiftRes, recordRes]) => {
+      if (shiftRes.data) setActiveShift(shiftRes.data);
+      if (recordRes.data) setTodayRecord(recordRes.data as TodaySummary);
     });
   }, [user]);
 
+  const totalCorridas = todayRecord
+    ? todayRecord.uber_rides + todayRecord.ninety_nine_rides + todayRecord.indrive_rides + todayRecord.private_rides
+    : 0;
+
   return (
     <Layout>
-      <div className="container mx-auto px-4 py-8 sm:px-6">
-        <div className="mb-4">
+      <div className="container mx-auto max-w-lg px-4 py-8 space-y-5">
+        {/* Greeting */}
+        <div>
           <h1 className="text-2xl sm:text-3xl font-bold text-foreground">
-            {getGreeting()}, {profile?.name || "Motorista"}! 🥳
+            {getGreeting()}, {profile?.name?.split(" ")[0] || "Motorista"}! 👋
           </h1>
-          <p className="mt-2 text-muted-foreground">Aqui está seu painel de controle.</p>
         </div>
 
+        {/* Subscription status */}
         <SubscriptionBanner profile={profile} />
-        <MetasSummary settings={settings} vehicle={vehicle} />
 
-        {/* Iniciar Turno CTA */}
-        <Card className="mb-6 rounded-2xl border-primary/20 bg-primary/5 shadow-sm hover:shadow-md transition-shadow cursor-pointer" onClick={() => navigate("/turno")}>
+        {/* Shift CTA */}
+        <Card
+          className="rounded-2xl border-primary/20 bg-primary/5 shadow-sm hover:shadow-md transition-shadow cursor-pointer"
+          onClick={() => navigate("/turno")}
+        >
           <CardContent className="flex items-center gap-4 p-5">
-            <div className="flex h-12 w-12 items-center justify-center rounded-full bg-primary text-primary-foreground">
-              <Play className="h-6 w-6" />
+            <div className="flex h-14 w-14 items-center justify-center rounded-full bg-primary text-primary-foreground">
+              <Play className="h-7 w-7" />
             </div>
             <div className="flex-1">
-              <p className="text-lg font-bold text-foreground">Iniciar Turno</p>
-              <p className="text-sm text-muted-foreground">Comece a cronometrar seu dia de trabalho</p>
+              <p className="text-lg font-bold text-foreground">
+                {activeShift ? "Continuar Turno" : "Iniciar Turno"}
+              </p>
+              <p className="text-sm text-muted-foreground">
+                {activeShift ? "Você tem um turno ativo" : "Comece a cronometrar seu dia"}
+              </p>
             </div>
             <Button size="sm" className="rounded-xl">Ir</Button>
           </CardContent>
         </Card>
 
-        <div className="grid gap-5 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
-          <Card className="rounded-2xl border-border bg-card shadow-sm hover:shadow-md transition-shadow p-1">
-            <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <CardTitle className="text-sm font-medium text-muted-foreground">Corridas Hoje</CardTitle>
-              <MdDirectionsCar className="h-6 w-6 text-primary" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-3xl font-bold text-foreground">0</div>
-              <p className="text-xs text-muted-foreground mt-1">Comece a registrar suas corridas</p>
+        {/* Today summary */}
+        {todayRecord && (
+          <Card className="rounded-2xl">
+            <CardContent className="p-5 space-y-3">
+              <p className="text-sm font-semibold text-muted-foreground">Resumo de hoje</p>
+              <div className="grid grid-cols-3 gap-3">
+                <div className="text-center">
+                  <DollarSign className="h-4 w-4 mx-auto text-primary mb-1" />
+                  <p className="text-xs text-muted-foreground">Faturamento</p>
+                  <p className="text-sm font-bold text-foreground">{fmt(todayRecord.total_faturamento)}</p>
+                </div>
+                <div className="text-center">
+                  <TrendingUp className="h-4 w-4 mx-auto text-primary mb-1" />
+                  <p className="text-xs text-muted-foreground">Lucro</p>
+                  <p className={`text-sm font-bold ${todayRecord.lucro_liquido >= 0 ? "text-primary" : "text-destructive"}`}>
+                    {fmt(todayRecord.lucro_liquido)}
+                  </p>
+                </div>
+                <div className="text-center">
+                  <Timer className="h-4 w-4 mx-auto text-muted-foreground mb-1" />
+                  <p className="text-xs text-muted-foreground">Tempo</p>
+                  <p className="text-sm font-bold text-foreground">{formatTime(todayRecord.tempo_ativo_segundos)}</p>
+                </div>
+              </div>
+              {totalCorridas > 0 && (
+                <p className="text-xs text-center text-muted-foreground">{totalCorridas} corrida{totalCorridas !== 1 ? "s" : ""} hoje</p>
+              )}
             </CardContent>
           </Card>
-          <Card className="rounded-2xl border-border bg-card shadow-sm hover:shadow-md transition-shadow p-1">
-            <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <CardTitle className="text-sm font-medium text-muted-foreground">Ganhos Hoje</CardTitle>
-              <MdAttachMoney className="h-6 w-6 text-secondary" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-3xl font-bold text-secondary">R$ 0,00</div>
-              <p className="text-xs text-muted-foreground mt-1">Acompanhe seus ganhos diários</p>
-            </CardContent>
-          </Card>
-          <Card className="rounded-2xl border-border bg-card shadow-sm hover:shadow-md transition-shadow p-1">
-            <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <CardTitle className="text-sm font-medium text-muted-foreground">Lucro Líquido</CardTitle>
-              <MdTrendingUp className="h-6 w-6" style={{ color: "hsl(160, 72%, 37%)" }} />
-            </CardHeader>
-            <CardContent>
-              <div className="text-3xl font-bold" style={{ color: "hsl(160, 72%, 37%)" }}>R$ 0,00</div>
-              <p className="text-xs text-muted-foreground mt-1">Descontando combustível e despesas</p>
-            </CardContent>
-          </Card>
+        )}
+
+        {/* Quick actions */}
+        <div className="grid grid-cols-2 gap-3">
+          <Button variant="outline" className="rounded-xl h-12" onClick={() => navigate("/finalizar-dia")}>
+            Finalizar Dia
+          </Button>
+          <Button variant="outline" className="rounded-xl h-12" onClick={() => navigate("/relatorios")}>
+            Relatórios
+          </Button>
         </div>
       </div>
     </Layout>
