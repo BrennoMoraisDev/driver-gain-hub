@@ -13,8 +13,19 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Loader2, DollarSign, TrendingUp, Fuel, Clock, Car, Download, AlertCircle } from "lucide-react";
+import { Loader2, DollarSign, TrendingUp, Fuel, Clock, Car, Download, AlertCircle, Pencil, Trash2 } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 import Layout from "@/components/Layout";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import {
   BarChart,
   Bar,
@@ -113,6 +124,7 @@ interface VehicleFlags {
 
 export default function Relatorios() {
   const { user } = useAuth();
+  const navigate = useNavigate();
   const [period, setPeriod] = useState<Period>("daily");
   const [refDate, setRefDate] = useState(format(new Date(), "yyyy-MM-dd"));
   const [records, setRecords] = useState<DailyRecord[]>([]);
@@ -123,34 +135,47 @@ export default function Relatorios() {
     incluir_financiamento: true,
   });
   const [loading, setLoading] = useState(false);
+  const [deleteId, setDeleteId] = useState<string | null>(null);
+  const [deleting, setDeleting] = useState(false);
+
+  const fetchData = async () => {
+    if (!user) return;
+    setLoading(true);
+    const { start, end } = getDateRange(period, refDate);
+    const [recordsRes, vehicleRes] = await Promise.all([
+      supabase
+        .from("daily_records")
+        .select("*")
+        .eq("user_id", user.id)
+        .gte("date", start)
+        .lte("date", end)
+        .order("date", { ascending: true }),
+      supabase
+        .from("vehicles")
+        .select("incluir_ipva, incluir_manutencao, incluir_seguro, incluir_financiamento")
+        .eq("user_id", user.id)
+        .maybeSingle(),
+    ]);
+    setRecords((recordsRes.data as DailyRecord[]) || []);
+    if (vehicleRes.data) {
+      setVehicleFlags(vehicleRes.data as VehicleFlags);
+    }
+    setLoading(false);
+  };
 
   useEffect(() => {
-    if (!user) return;
-    const fetchData = async () => {
-      setLoading(true);
-      const { start, end } = getDateRange(period, refDate);
-      const [recordsRes, vehicleRes] = await Promise.all([
-        supabase
-          .from("daily_records")
-          .select("*")
-          .eq("user_id", user.id)
-          .gte("date", start)
-          .lte("date", end)
-          .order("date", { ascending: true }),
-        supabase
-          .from("vehicles")
-          .select("incluir_ipva, incluir_manutencao, incluir_seguro, incluir_financiamento")
-          .eq("user_id", user.id)
-          .maybeSingle(),
-      ]);
-      setRecords((recordsRes.data as DailyRecord[]) || []);
-      if (vehicleRes.data) {
-        setVehicleFlags(vehicleRes.data as VehicleFlags);
-      }
-      setLoading(false);
-    };
     fetchData();
   }, [user, period, refDate]);
+
+  const handleDelete = async () => {
+    if (!deleteId || !user) return;
+    setDeleting(true);
+    const { error } = await supabase.from("daily_records").delete().eq("id", deleteId).eq("user_id", user.id);
+    setDeleting(false);
+    setDeleteId(null);
+    if (error) return;
+    fetchData();
+  };
 
   const summary = useMemo(() => {
     if (!records.length) return null;
@@ -372,6 +397,7 @@ export default function Relatorios() {
                       <TableHead className="text-right">Lucro</TableHead>
                       <TableHead className="text-right">Corridas</TableHead>
                       <TableHead className="text-right">Km</TableHead>
+                      <TableHead className="text-right">Ações</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -387,6 +413,26 @@ export default function Relatorios() {
                           {r.uber_rides + r.ninety_nine_rides + r.indrive_rides + r.private_rides}
                         </TableCell>
                         <TableCell className="text-right">{r.km_total.toFixed(1)}</TableCell>
+                        <TableCell className="text-right">
+                          <div className="flex items-center justify-end gap-1">
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-7 w-7"
+                              onClick={() => navigate(`/finalizar-dia?id=${r.id}`)}
+                            >
+                              <Pencil className="h-3.5 w-3.5" />
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-7 w-7 text-destructive hover:text-destructive"
+                              onClick={() => setDeleteId(r.id)}
+                            >
+                              <Trash2 className="h-3.5 w-3.5" />
+                            </Button>
+                          </div>
+                        </TableCell>
                       </TableRow>
                     ))}
                   </TableBody>
@@ -396,6 +442,24 @@ export default function Relatorios() {
           </>
         )}
       </div>
+
+      {/* Delete confirmation */}
+      <AlertDialog open={!!deleteId} onOpenChange={(open) => !open && setDeleteId(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Excluir registro?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Essa ação não pode ser desfeita. O registro diário será excluído permanentemente.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDelete} disabled={deleting} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+              {deleting ? "Excluindo..." : "Excluir"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </Layout>
   );
 }

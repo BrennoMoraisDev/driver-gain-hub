@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2, CheckCircle, Car, Fuel, UtensilsCrossed, ReceiptText } from "lucide-react";
+import { Loader2, CheckCircle, Car, Fuel, UtensilsCrossed, ReceiptText, Calendar } from "lucide-react";
 import Layout from "@/components/Layout";
 import { useNavigate, useSearchParams } from "react-router-dom";
 
@@ -31,12 +31,17 @@ export default function FinalizarDia() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const shiftId = searchParams.get("shift");
+  const editId = searchParams.get("id"); // editing existing record
 
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [tempoAtivo, setTempoAtivo] = useState(0);
   const [diasTrabalho, setDiasTrabalho] = useState(22);
   const [vehicle, setVehicle] = useState<VehicleData | null>(null);
+  const [recordDate, setRecordDate] = useState(new Date().toISOString().split("T")[0]);
+
+  // Manual hours input (when no shift)
+  const [horasManuais, setHorasManuais] = useState(0);
 
   // Platform fields
   const [uberRides, setUberRides] = useState(0);
@@ -63,13 +68,41 @@ export default function FinalizarDia() {
       if (vehicleRes.data) setVehicle(vehicleRes.data as VehicleData);
       if (settingsRes.data) setDiasTrabalho(settingsRes.data.dias_trabalho_mes || 22);
 
-      if (shiftId) {
+      if (shiftId && !editId) {
         const { data } = await supabase.from("shift_sessions").select("total_active_seconds").eq("id", shiftId).single();
         if (data) setTempoAtivo(data.total_active_seconds || 0);
       }
+
+      // Load existing record for editing
+      if (editId) {
+        const { data } = await supabase.from("daily_records").select("*").eq("id", editId).eq("user_id", user.id).single();
+        if (data) {
+          setRecordDate(data.date);
+          setUberRides(data.uber_rides || 0);
+          setUberAmount(data.uber_amount || 0);
+          setNnRides(data.ninety_nine_rides || 0);
+          setNnAmount(data.ninety_nine_amount || 0);
+          setIndriveRides(data.indrive_rides || 0);
+          setIndriveAmount(data.indrive_amount || 0);
+          setPrivateRides(data.private_rides || 0);
+          setPrivateAmount(data.private_amount || 0);
+          setKmTotal(data.km_total || 0);
+          setGastoCombustivel(data.gasto_combustivel || 0);
+          setGastoAlimentacao(data.gasto_alimentacao || 0);
+          setGastoOutros(data.gasto_outros || 0);
+          setTempoAtivo(data.tempo_ativo_segundos || 0);
+          if (data.tempo_ativo_segundos) {
+            setHorasManuais(parseFloat((data.tempo_ativo_segundos / 3600).toFixed(1)));
+          }
+        }
+      }
+
       setLoading(false);
     })();
-  }, [user, shiftId]);
+  }, [user, shiftId, editId]);
+
+  // Use shift time or manual hours
+  const effectiveTempoAtivo = shiftId && tempoAtivo > 0 ? tempoAtivo : horasManuais * 3600;
 
   // Calculations
   const totalFaturamento = uberAmount + nnAmount + indriveAmount + privateAmount;
@@ -83,7 +116,7 @@ export default function FinalizarDia() {
   const totalProvisoes = ipvaDiaria + manutDiaria + seguroDiario + financDiario;
 
   const lucroLiquido = lucroBruto - totalProvisoes;
-  const horasAtivas = tempoAtivo / 3600;
+  const horasAtivas = effectiveTempoAtivo / 3600;
   const mediaHoraLiquida = horasAtivas > 0 ? lucroLiquido / horasAtivas : 0;
 
   const handleSave = async () => {
@@ -92,7 +125,7 @@ export default function FinalizarDia() {
     try {
       const record = {
         user_id: user.id,
-        date: new Date().toISOString().split("T")[0],
+        date: recordDate,
         shift_session_id: shiftId || null,
         uber_rides: uberRides,
         uber_amount: uberAmount,
@@ -115,14 +148,35 @@ export default function FinalizarDia() {
         custo_financiamento_diario: financDiario,
         lucro_liquido: lucroLiquido,
         media_hora_liquida: mediaHoraLiquida,
-        tempo_ativo_segundos: tempoAtivo,
+        tempo_ativo_segundos: Math.round(effectiveTempoAtivo),
       };
 
-      const { error } = await supabase.from("daily_records").insert(record);
-      if (error) throw error;
+      if (editId) {
+        // Update existing record
+        const { error } = await supabase.from("daily_records").update(record).eq("id", editId).eq("user_id", user.id);
+        if (error) throw error;
+        toast({ title: "Registro atualizado! ✅", description: `Lucro líquido: ${fmt(lucroLiquido)}`, duration: 3000 });
+      } else {
+        // Check for duplicate date
+        const { data: existing } = await supabase
+          .from("daily_records")
+          .select("id")
+          .eq("user_id", user.id)
+          .eq("date", recordDate)
+          .maybeSingle();
 
-      toast({ title: "Dia finalizado! ✅", description: `Lucro líquido: ${fmt(lucroLiquido)}`, duration: 3000 });
-      navigate("/dashboard");
+        if (existing) {
+          toast({ title: "Data duplicada", description: "Já existe um registro para esta data. Edite o existente na página de relatórios.", variant: "destructive" });
+          setSaving(false);
+          return;
+        }
+
+        const { error } = await supabase.from("daily_records").insert(record);
+        if (error) throw error;
+        toast({ title: "Dia finalizado! ✅", description: `Lucro líquido: ${fmt(lucroLiquido)}`, duration: 3000 });
+      }
+
+      navigate("/relatorios");
     } catch (err: any) {
       toast({ title: "Erro ao salvar", description: err.message, variant: "destructive" });
     } finally {
@@ -143,7 +197,48 @@ export default function FinalizarDia() {
   return (
     <Layout>
       <div className="container mx-auto max-w-lg px-4 py-8 space-y-6">
-        <h1 className="text-2xl font-bold text-foreground text-center">Finalizar Dia</h1>
+        <h1 className="text-2xl font-bold text-foreground text-center">
+          {editId ? "Editar Registro" : "Finalizar Dia"}
+        </h1>
+
+        {/* Date field */}
+        <Card>
+          <CardContent className="p-4">
+            <div className="flex items-center gap-3">
+              <Calendar className="h-5 w-5 text-primary shrink-0" />
+              <div className="flex-1">
+                <Label className="text-xs text-muted-foreground">Data do registro</Label>
+                <Input
+                  type="date"
+                  value={recordDate}
+                  onChange={(e) => setRecordDate(e.target.value)}
+                  className="mt-1"
+                />
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Manual hours (when no shift) */}
+        {!shiftId && (
+          <Card>
+            <CardContent className="p-4">
+              <Label className="text-xs text-muted-foreground">Horas trabalhadas (manual)</Label>
+              <Input
+                type="number"
+                min={0}
+                step={0.5}
+                value={horasManuais || ""}
+                onChange={(e) => setHorasManuais(Number(e.target.value) || 0)}
+                placeholder="Ex: 8.5"
+                className="mt-1"
+              />
+              <p className="text-xs text-muted-foreground mt-1">
+                Informe as horas se não usou o cronômetro de turno.
+              </p>
+            </CardContent>
+          </Card>
+        )}
 
         {/* Faturamento por plataforma */}
         <Card>
@@ -260,7 +355,7 @@ export default function FinalizarDia() {
 
         <Button onClick={handleSave} disabled={saving} className="w-full h-14 text-lg rounded-xl" size="lg">
           {saving ? <Loader2 className="h-5 w-5 animate-spin mr-2" /> : <CheckCircle className="h-5 w-5 mr-2" />}
-          Salvar e Finalizar
+          {editId ? "Salvar Alterações" : "Salvar e Finalizar"}
         </Button>
       </div>
     </Layout>
