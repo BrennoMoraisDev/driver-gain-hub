@@ -20,6 +20,7 @@ interface AuthContextType {
   session: Session | null;
   loading: boolean;
   hasAccess: boolean;
+  isReadOnly: boolean;
   isAdmin: boolean;
   signUp: (name: string, email: string, password: string) => Promise<void>;
   signIn: (email: string, password: string) => Promise<void>;
@@ -106,8 +107,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     );
   })();
 
+  // Read-only: expired but not blocked — can view data but not write
+  const isReadOnly = (() => {
+    if (!profile) return false;
+    if (isAdmin) return false;
+    if (hasAccess) return false;
+    const status = profile.status_assinatura;
+    // blocked accounts get no access at all
+    if (status === "blocked") return false;
+    return true; // expired trial, expired active, expired canceled
+  })();
+
   return (
-    <AuthContext.Provider value={{ user, profile, session, loading, hasAccess, isAdmin, signUp, signIn, signOut, refreshProfile }}>
+    <AuthContext.Provider value={{ user, profile, session, loading, hasAccess, isReadOnly, isAdmin, signUp, signIn, signOut, refreshProfile }}>
       {children}
     </AuthContext.Provider>
   );

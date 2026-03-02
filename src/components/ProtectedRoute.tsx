@@ -4,7 +4,7 @@ import { useAuth } from "@/contexts/AuthContext";
 const FREE_ROUTES = ["/assinar", "/perfil", "/configuracoes"];
 
 export default function ProtectedRoute({ children }: { children: React.ReactNode }) {
-  const { user, loading, hasAccess } = useAuth();
+  const { user, loading, hasAccess, isReadOnly, profile } = useAuth();
   const location = useLocation();
 
   if (loading) {
@@ -22,7 +22,17 @@ export default function ProtectedRoute({ children }: { children: React.ReactNode
     return <>{children}</>;
   }
 
-  // Check subscription access via AuthContext
+  // Read-only users can access dashboard and relatorios (view-only)
+  if (isReadOnly) {
+    const readOnlyRoutes = ["/dashboard", "/relatorios"];
+    if (readOnlyRoutes.some((r) => location.pathname.startsWith(r))) {
+      return <>{children}</>;
+    }
+    // Redirect expired users to dashboard instead of /assinar
+    return <Navigate to="/dashboard" replace />;
+  }
+
+  // Blocked accounts (no read-only, no access) → /assinar
   if (!hasAccess) {
     return <Navigate to="/assinar" replace />;
   }

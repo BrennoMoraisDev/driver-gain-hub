@@ -23,7 +23,7 @@ function formatTime(totalSeconds: number): string {
   return `${h}h ${String(m).padStart(2, "0")}min`;
 }
 
-function SubscriptionBanner({ profile }: { profile: any }) {
+function SubscriptionBanner({ profile, isReadOnly }: { profile: any; isReadOnly: boolean }) {
   if (!profile) return null;
   const isAdmin = profile.email === "brennomoraisdev@gmail.com";
   if (isAdmin) {
@@ -34,11 +34,23 @@ function SubscriptionBanner({ profile }: { profile: any }) {
       </div>
     );
   }
+
+  if (isReadOnly) {
+    return (
+      <div className="flex items-center gap-3 rounded-2xl border border-destructive/30 bg-destructive/5 px-5 py-3">
+        <AlertTriangle className="h-5 w-5 text-destructive shrink-0" />
+        <div className="flex-1">
+          <p className="text-sm font-semibold text-foreground">Assinatura expirada</p>
+          <p className="text-xs text-muted-foreground">Seus dados estão em modo leitura. Assine para continuar registrando.</p>
+        </div>
+      </div>
+    );
+  }
+
   const status = profile.status_assinatura;
   const expDate = profile.data_expiracao ? new Date(profile.data_expiracao) : null;
   const now = new Date();
-  const isExpired = expDate && expDate < now;
-  if (status === "trial" && !isExpired && expDate) {
+  if (status === "trial" && expDate && expDate > now) {
     const daysLeft = Math.max(0, Math.ceil((expDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24)));
     return (
       <div className="flex items-center gap-3 rounded-2xl border border-yellow-400/30 bg-yellow-50 dark:bg-yellow-900/10 px-5 py-3">
@@ -47,7 +59,7 @@ function SubscriptionBanner({ profile }: { profile: any }) {
       </div>
     );
   }
-  if (status === "active" && !isExpired) {
+  if (status === "active" && expDate && expDate > now) {
     return (
       <div className="flex items-center gap-3 rounded-2xl border border-primary/20 bg-primary/5 px-5 py-3">
         <CheckCircle className="h-5 w-5 text-primary shrink-0" />
@@ -74,7 +86,7 @@ interface TodaySummary {
 }
 
 export default function Dashboard() {
-  const { user, profile } = useAuth();
+  const { user, profile, isReadOnly } = useAuth();
   const navigate = useNavigate();
   const [activeShift, setActiveShift] = useState<{ id: string } | null>(null);
   const [todayRecord, setTodayRecord] = useState<TodaySummary | null>(null);
@@ -117,28 +129,37 @@ export default function Dashboard() {
         </div>
 
         {/* Subscription status */}
-        <SubscriptionBanner profile={profile} />
+        <SubscriptionBanner profile={profile} isReadOnly={isReadOnly} />
 
-        {/* Shift CTA */}
-        <Card
-          className="rounded-2xl border-primary/20 bg-primary/5 shadow-sm hover:shadow-md transition-shadow cursor-pointer"
-          onClick={() => navigate("/turno")}
-        >
-          <CardContent className="flex items-center gap-4 p-5">
-            <div className="flex h-14 w-14 items-center justify-center rounded-full bg-primary text-primary-foreground">
-              <Play className="h-7 w-7" />
-            </div>
-            <div className="flex-1">
-              <p className="text-lg font-bold text-foreground">
-                {activeShift ? "Continuar Turno" : "Iniciar Turno"}
-              </p>
-              <p className="text-sm text-muted-foreground">
-                {activeShift ? "Você tem um turno ativo" : "Comece a cronometrar seu dia"}
-              </p>
-            </div>
-            <Button size="sm" className="rounded-xl">Ir</Button>
-          </CardContent>
-        </Card>
+        {/* CTA to subscribe when read-only */}
+        {isReadOnly && (
+          <Button className="w-full rounded-xl" onClick={() => navigate("/assinar")}>
+            Assinar agora
+          </Button>
+        )}
+
+        {/* Shift CTA - hidden when read-only */}
+        {!isReadOnly && (
+          <Card
+            className="rounded-2xl border-primary/20 bg-primary/5 shadow-sm hover:shadow-md transition-shadow cursor-pointer"
+            onClick={() => navigate("/turno")}
+          >
+            <CardContent className="flex items-center gap-4 p-5">
+              <div className="flex h-14 w-14 items-center justify-center rounded-full bg-primary text-primary-foreground">
+                <Play className="h-7 w-7" />
+              </div>
+              <div className="flex-1">
+                <p className="text-lg font-bold text-foreground">
+                  {activeShift ? "Continuar Turno" : "Iniciar Turno"}
+                </p>
+                <p className="text-sm text-muted-foreground">
+                  {activeShift ? "Você tem um turno ativo" : "Comece a cronometrar seu dia"}
+                </p>
+              </div>
+              <Button size="sm" className="rounded-xl">Ir</Button>
+            </CardContent>
+          </Card>
+        )}
 
         {/* Today summary */}
         {todayRecord && (
@@ -171,15 +192,24 @@ export default function Dashboard() {
           </Card>
         )}
 
-        {/* Quick actions */}
-        <div className="grid grid-cols-2 gap-3">
-          <Button variant="outline" className="rounded-xl h-12" onClick={() => navigate("/finalizar-dia")}>
-            Finalizar Dia
+        {/* Quick actions - hidden when read-only */}
+        {!isReadOnly && (
+          <div className="grid grid-cols-2 gap-3">
+            <Button variant="outline" className="rounded-xl h-12" onClick={() => navigate("/finalizar-dia")}>
+              Finalizar Dia
+            </Button>
+            <Button variant="outline" className="rounded-xl h-12" onClick={() => navigate("/relatorios")}>
+              Relatórios
+            </Button>
+          </div>
+        )}
+
+        {/* Read-only: only show reports link */}
+        {isReadOnly && (
+          <Button variant="outline" className="w-full rounded-xl h-12" onClick={() => navigate("/relatorios")}>
+            Ver Relatórios
           </Button>
-          <Button variant="outline" className="rounded-xl h-12" onClick={() => navigate("/relatorios")}>
-            Relatórios
-          </Button>
-        </div>
+        )}
       </div>
     </Layout>
   );
