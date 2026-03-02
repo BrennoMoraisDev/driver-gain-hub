@@ -51,6 +51,63 @@ import {
 } from "date-fns";
 import { ptBR } from "date-fns/locale";
 
+interface DailyRecordRaw {
+  id: string;
+  date: string;
+  uber_rides: number | null;
+  uber_amount: number | null;
+  ninety_nine_rides: number | null;
+  ninety_nine_amount: number | null;
+  indrive_rides: number | null;
+  indrive_amount: number | null;
+  private_rides: number | null;
+  private_amount: number | null;
+  total_faturamento: number | null;
+  km_total: number | null;
+  gasto_combustivel: number | null;
+  gasto_alimentacao: number | null;
+  gasto_outros: number | null;
+  total_gastos_variaveis: number | null;
+  lucro_bruto: number | null;
+  provisao_ipva_diaria: number | null;
+  provisao_manutencao_diaria: number | null;
+  provisao_seguro_diaria: number | null;
+  custo_financiamento_diario: number | null;
+  lucro_liquido: number | null;
+  media_hora_liquida: number | null;
+  tempo_ativo_segundos: number | null;
+}
+
+// Normalize nulls to 0
+function normalizeRecord(r: DailyRecordRaw): DailyRecord {
+  return {
+    id: r.id,
+    date: r.date,
+    uber_rides: r.uber_rides ?? 0,
+    uber_amount: r.uber_amount ?? 0,
+    ninety_nine_rides: r.ninety_nine_rides ?? 0,
+    ninety_nine_amount: r.ninety_nine_amount ?? 0,
+    indrive_rides: r.indrive_rides ?? 0,
+    indrive_amount: r.indrive_amount ?? 0,
+    private_rides: r.private_rides ?? 0,
+    private_amount: r.private_amount ?? 0,
+    total_faturamento: r.total_faturamento ?? 0,
+    km_total: r.km_total ?? 0,
+    gasto_combustivel: r.gasto_combustivel ?? 0,
+    gasto_alimentacao: r.gasto_alimentacao ?? 0,
+    gasto_outros: r.gasto_outros ?? 0,
+    total_gastos_variaveis: r.total_gastos_variaveis ?? 0,
+    lucro_bruto: r.lucro_bruto ?? 0,
+    provisao_ipva_diaria: r.provisao_ipva_diaria ?? 0,
+    provisao_manutencao_diaria: r.provisao_manutencao_diaria ?? 0,
+    provisao_seguro_diaria: r.provisao_seguro_diaria ?? 0,
+    custo_financiamento_diario: r.custo_financiamento_diario ?? 0,
+    lucro_liquido: r.lucro_liquido ?? 0,
+    media_hora_liquida: r.media_hora_liquida ?? 0,
+    tempo_ativo_segundos: r.tempo_ativo_segundos ?? 0,
+  };
+}
+
 interface DailyRecord {
   id: string;
   date: string;
@@ -156,7 +213,7 @@ export default function Relatorios() {
         .eq("user_id", user.id)
         .maybeSingle(),
     ]);
-    setRecords((recordsRes.data as DailyRecord[]) || []);
+    setRecords(((recordsRes.data as DailyRecordRaw[]) || []).map(normalizeRecord));
     if (vehicleRes.data) {
       setVehicleFlags(vehicleRes.data as VehicleFlags);
     }
@@ -288,11 +345,20 @@ export default function Relatorios() {
 
         {/* Date picker */}
         <div className="flex items-center gap-3 justify-center">
-          <Input
-            type="date"
-            value={refDate}
-            onChange={(e) => setRefDate(e.target.value)}
+         <Input
+            type={period === "monthly" ? "month" : period === "annual" ? "number" : "date"}
+            value={period === "monthly" ? refDate.substring(0, 7) : period === "annual" ? refDate.substring(0, 4) : refDate}
+            onChange={(e) => {
+              if (period === "monthly") {
+                setRefDate(e.target.value + "-01");
+              } else if (period === "annual") {
+                setRefDate(e.target.value + "-01-01");
+              } else {
+                setRefDate(e.target.value);
+              }
+            }}
             className="max-w-[200px]"
+            {...(period === "annual" ? { min: 2020, max: 2099 } : {})}
           />
           <Button variant="outline" size="sm" onClick={exportCSV} disabled={!records.length}>
             <Download className="h-4 w-4 mr-1" /> CSV

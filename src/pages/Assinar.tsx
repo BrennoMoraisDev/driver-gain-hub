@@ -1,3 +1,4 @@
+import { Navigate } from "react-router-dom";
 import Layout from "@/components/Layout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -10,15 +11,7 @@ export default function Assinar() {
   const { profile, hasAccess, isAdmin } = useAuth();
 
   if (isAdmin || hasAccess) {
-    return (
-      <Layout>
-        <div className="container mx-auto max-w-lg px-4 py-16 text-center">
-          <CheckCircle className="mx-auto h-16 w-16 text-primary mb-4" />
-          <h1 className="text-2xl font-bold text-foreground mb-2">Você já tem acesso Premium!</h1>
-          <p className="text-muted-foreground">Aproveite todas as funcionalidades da plataforma.</p>
-        </div>
-      </Layout>
-    );
+    return <Navigate to="/dashboard" replace />;
   }
 
   const isTrial = profile?.status_assinatura === "trial";

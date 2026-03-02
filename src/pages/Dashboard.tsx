@@ -76,13 +76,13 @@ function SubscriptionBanner({ profile, isReadOnly }: { profile: any; isReadOnly:
 }
 
 interface TodaySummary {
-  total_faturamento: number;
-  lucro_liquido: number;
-  tempo_ativo_segundos: number;
-  uber_rides: number;
-  ninety_nine_rides: number;
-  indrive_rides: number;
-  private_rides: number;
+  total_faturamento: number | null;
+  lucro_liquido: number | null;
+  tempo_ativo_segundos: number | null;
+  uber_rides: number | null;
+  ninety_nine_rides: number | null;
+  indrive_rides: number | null;
+  private_rides: number | null;
 }
 
 export default function Dashboard() {
@@ -115,7 +115,7 @@ export default function Dashboard() {
   }, [user]);
 
   const totalCorridas = todayRecord
-    ? todayRecord.uber_rides + todayRecord.ninety_nine_rides + todayRecord.indrive_rides + todayRecord.private_rides
+    ? (todayRecord.uber_rides ?? 0) + (todayRecord.ninety_nine_rides ?? 0) + (todayRecord.indrive_rides ?? 0) + (todayRecord.private_rides ?? 0)
     : 0;
 
   return (
@@ -170,19 +170,19 @@ export default function Dashboard() {
                 <div className="text-center">
                   <DollarSign className="h-4 w-4 mx-auto text-primary mb-1" />
                   <p className="text-xs text-muted-foreground">Faturamento</p>
-                  <p className="text-sm font-bold text-foreground">{fmt(todayRecord.total_faturamento)}</p>
+                  <p className="text-sm font-bold text-foreground">{fmt(todayRecord.total_faturamento ?? 0)}</p>
                 </div>
                 <div className="text-center">
                   <TrendingUp className="h-4 w-4 mx-auto text-primary mb-1" />
                   <p className="text-xs text-muted-foreground">Lucro</p>
-                  <p className={`text-sm font-bold ${todayRecord.lucro_liquido >= 0 ? "text-primary" : "text-destructive"}`}>
-                    {fmt(todayRecord.lucro_liquido)}
+                  <p className={`text-sm font-bold ${(todayRecord.lucro_liquido ?? 0) >= 0 ? "text-primary" : "text-destructive"}`}>
+                    {fmt(todayRecord.lucro_liquido ?? 0)}
                   </p>
                 </div>
                 <div className="text-center">
                   <Timer className="h-4 w-4 mx-auto text-muted-foreground mb-1" />
                   <p className="text-xs text-muted-foreground">Tempo</p>
-                  <p className="text-sm font-bold text-foreground">{formatTime(todayRecord.tempo_ativo_segundos)}</p>
+                  <p className="text-sm font-bold text-foreground">{formatTime(todayRecord.tempo_ativo_segundos ?? 0)}</p>
                 </div>
               </div>
               {totalCorridas > 0 && (
